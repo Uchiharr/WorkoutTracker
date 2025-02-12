@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { hexToHSL } from "@/lib/utils";
 
 type WeightUnit = "kg" | "lb";
 type ThemeMode = "light" | "dark";
@@ -37,18 +38,20 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem("accentColor", color);
     setAccentColor(color);
 
-    // Convert hex to HSL for CSS variables
+    // Convert hex to HSL and apply to CSS variables
+    const hsl = hexToHSL(color);
     const root = document.documentElement;
-    root.style.setProperty('--primary', color);
-    root.style.setProperty('--border', color);
-    root.style.setProperty('--ring', color);
-    root.style.setProperty('--input', color);
-    root.style.setProperty('--accent', color);
+    root.style.setProperty('--primary', hsl);
+    root.style.setProperty('--primary-foreground', '0 0% 100%');
 
-    // Update toggle and interactive elements
-    root.style.setProperty('--switch', color);
-    root.style.setProperty('--switch-foreground', 'hsl(0 0% 100%)');
-    root.style.setProperty('--focus-ring', `${color}33`); // 20% opacity version
+    // Apply to interactive elements
+    root.style.setProperty('--ring', hsl);
+    root.style.setProperty('--input', hsl);
+    root.style.setProperty('--border', hsl);
+
+    // Set accent colors
+    root.style.setProperty('--accent', hsl);
+    root.style.setProperty('--accent-foreground', '0 0% 100%');
   };
 
   const handleSetThemeMode = (mode: ThemeMode) => {
