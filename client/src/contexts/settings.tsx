@@ -36,7 +36,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const handleSetAccentColor = (color: string) => {
     localStorage.setItem("accentColor", color);
     setAccentColor(color);
+    // Update various UI element colors
     document.documentElement.style.setProperty('--primary', color);
+    document.documentElement.style.setProperty('--border', color);
+    document.documentElement.style.setProperty('--ring', color);
+    document.documentElement.style.setProperty('--input', color);
   };
 
   const handleSetThemeMode = (mode: ThemeMode) => {
@@ -45,9 +49,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle("dark", mode === "dark");
   };
 
-  // Initialize theme on mount
+  // Initialize theme and colors on mount
   useEffect(() => {
     handleSetThemeMode(themeMode);
+    handleSetAccentColor(accentColor);
   }, []);
 
   return (
