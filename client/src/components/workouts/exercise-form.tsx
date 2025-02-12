@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form } from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { insertExerciseSchema, type InsertExercise } from "@shared/schema";
@@ -20,41 +20,75 @@ export function ExerciseForm({ onSubmit }: ExerciseFormProps) {
     }
   });
 
+  const handleSubmit = (data: Omit<InsertExercise, "workoutId">) => {
+    onSubmit(data);
+    form.reset();
+  };
+
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit((data) => {
-          onSubmit(data);
-          form.reset();
-        })}
-        className="space-y-4 border p-4 rounded-lg"
-      >
-        <h3 className="font-medium">Add Exercise</h3>
-        
+    <div className="space-y-4 border p-4 rounded-lg">
+      <h3 className="font-medium">Add Exercise</h3>
+
+      <Form {...form}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <Input
-              placeholder="Exercise Name"
-              {...form.register("name")}
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input placeholder="Exercise Name" {...field} />
+                  </FormControl>
+                </FormItem>
+              )}
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-2">
-            <Input
-              type="number"
-              placeholder="Sets"
-              {...form.register("sets", { valueAsNumber: true })}
+            <FormField
+              control={form.control}
+              name="sets"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="Sets" 
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
-            <Input
-              type="number"
-              placeholder="Reps"
-              {...form.register("reps", { valueAsNumber: true })}
+            <FormField
+              control={form.control}
+              name="reps"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      placeholder="Reps" 
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value, 10))}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
           </div>
         </div>
 
-        <Button type="submit">Add Exercise</Button>
-      </form>
-    </Form>
+        <Button 
+          type="button" 
+          className="mt-4"
+          onClick={form.handleSubmit(handleSubmit)}
+        >
+          Add Exercise
+        </Button>
+      </Form>
+    </div>
   );
 }
