@@ -1,77 +1,69 @@
 import { type Workout, type Exercise, type WorkoutHistory, type InsertWorkout, type InsertExercise, type InsertHistory } from "@shared/schema";
+import { workouts, exercises, workoutHistory } from "@shared/schema";
+import { db } from "./db";
+import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workouts
   createWorkout(workout: InsertWorkout): Promise<Workout>;
   getWorkout(id: number): Promise<Workout | undefined>;
   listWorkouts(): Promise<Workout[]>;
-  
+
   // Exercises
   createExercise(exercise: InsertExercise): Promise<Exercise>;
   getExercisesForWorkout(workoutId: number): Promise<Exercise[]>;
-  
+
   // History
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
   getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]>;
 }
 
-export class MemStorage implements IStorage {
-  private workouts: Map<number, Workout>;
-  private exercises: Map<number, Exercise>;
-  private history: Map<number, WorkoutHistory>;
-  private currentWorkoutId: number;
-  private currentExerciseId: number;
-  private currentHistoryId: number;
-
-  constructor() {
-    this.workouts = new Map();
-    this.exercises = new Map();
-    this.history = new Map();
-    this.currentWorkoutId = 1;
-    this.currentExerciseId = 1;
-    this.currentHistoryId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
-    const id = this.currentWorkoutId++;
-    const newWorkout = { ...workout, id };
-    this.workouts.set(id, newWorkout);
-    return newWorkout;
+    const [result] = await db.insert(workouts).values(workout).returning();
+    return result;
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {
-    return this.workouts.get(id);
+    const [result] = await db.select().from(workouts).where(eq(workouts.id, id));
+    return result;
   }
 
   async listWorkouts(): Promise<Workout[]> {
-    return Array.from(this.workouts.values());
+    return db.select().from(workouts);
   }
 
   async createExercise(exercise: InsertExercise): Promise<Exercise> {
-    const id = this.currentExerciseId++;
-    const newExercise = { ...exercise, id };
-    this.exercises.set(id, newExercise);
-    return newExercise;
+    const [result] = await db.insert(exercises).values(exercise).returning();
+    return result;
   }
 
   async getExercisesForWorkout(workoutId: number): Promise<Exercise[]> {
-    return Array.from(this.exercises.values())
-      .filter(e => e.workoutId === workoutId)
-      .sort((a, b) => a.order - b.order);
+    return db
+      .select()
+      .from(exercises)
+      .where(eq(exercises.workoutId, workoutId))
+      .orderBy(exercises.order);
   }
 
   async addHistory(history: InsertHistory): Promise<WorkoutHistory> {
-    const id = this.currentHistoryId++;
-    const newHistory = { ...history, id };
-    this.history.set(id, newHistory);
-    return newHistory;
+    const [result] = await db
+      .insert(workoutHistory)
+      .values({
+        ...history,
+        completedAt: sql`CURRENT_TIMESTAMP`
+      })
+      .returning();
+    return result;
   }
 
   async getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]> {
-    return Array.from(this.history.values())
-      .filter(h => h.exerciseId === exerciseId)
-      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+    return db
+      .select()
+      .from(workoutHistory)
+      .where(eq(workoutHistory.exerciseId, exerciseId))
+      .orderBy(desc(workoutHistory.completedAt));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
