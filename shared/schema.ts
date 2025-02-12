@@ -21,6 +21,7 @@ export const workoutHistory = pgTable("workout_history", {
   workoutId: integer("workout_id").notNull(),
   exerciseId: integer("exercise_id").notNull(),
   weight: integer("weight").notNull(),
+  unit: text("unit").notNull().$type<"kg" | "lb">().default("lb"),
   completedAt: timestamp("completed_at").notNull(),
 });
 

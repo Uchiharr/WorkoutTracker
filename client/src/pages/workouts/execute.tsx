@@ -6,11 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useSettings } from "@/contexts/settings";
 import type { Exercise, WorkoutHistory } from "@shared/schema";
 
 export default function ExecuteWorkout({ params }: { params: { id: string } }) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
+  const { weightUnit } = useSettings();
   const [currentExercise, setCurrentExercise] = useState(0);
   const [weight, setWeight] = useState("");
 
@@ -33,14 +35,15 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
       await apiRequest("POST", "/api/history", {
         workoutId: Number(params.id),
         exerciseId: exercise.id,
-        weight: Number(weight)
+        weight: Number(weight),
+        unit: weightUnit
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: [`/api/exercises/${exercises![currentExercise].id}/history`]
       });
-      
+
       if (currentExercise < exercises!.length - 1) {
         setCurrentExercise(currentExercise + 1);
         setWeight("");
@@ -56,7 +59,7 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
   }
 
   const exercise = exercises[currentExercise];
-  const lastWeight = history?.[0]?.weight;
+  const lastWeight = history?.[0];
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -74,12 +77,14 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
           {lastWeight && (
             <div>
               <p className="text-sm text-muted-foreground">Last weight used:</p>
-              <p className="text-xl font-medium">{lastWeight} lbs</p>
+              <p className="text-xl font-medium">
+                {lastWeight.weight} {lastWeight.unit}
+              </p>
             </div>
           )}
 
           <div className="space-y-2">
-            <p className="text-sm font-medium">Weight used (lbs)</p>
+            <p className="text-sm font-medium">Weight ({weightUnit})</p>
             <Input
               type="number"
               value={weight}

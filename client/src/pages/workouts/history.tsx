@@ -23,7 +23,7 @@ export default function WorkoutHistory({ params }: { params: { id: string } }) {
         {exerciseHistories?.map(({ exercise, history }) => (
           <Card key={exercise.id} className="p-6">
             <h2 className="text-xl font-bold mb-4">{exercise.name}</h2>
-            
+
             {!history?.length ? (
               <p className="text-muted-foreground">No history yet</p>
             ) : (
@@ -33,7 +33,9 @@ export default function WorkoutHistory({ params }: { params: { id: string } }) {
                     <div className="text-sm text-muted-foreground">
                       {format(new Date(h.completedAt), "PPP")}
                     </div>
-                    <div className="font-medium">{h.weight} lbs</div>
+                    <div className="font-medium">
+                      {h.weight} {h.unit}
+                    </div>
                   </div>
                 ))}
               </div>
