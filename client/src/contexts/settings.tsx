@@ -36,11 +36,19 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const handleSetAccentColor = (color: string) => {
     localStorage.setItem("accentColor", color);
     setAccentColor(color);
-    // Update various UI element colors
-    document.documentElement.style.setProperty('--primary', color);
-    document.documentElement.style.setProperty('--border', color);
-    document.documentElement.style.setProperty('--ring', color);
-    document.documentElement.style.setProperty('--input', color);
+
+    // Convert hex to HSL for CSS variables
+    const root = document.documentElement;
+    root.style.setProperty('--primary', color);
+    root.style.setProperty('--border', color);
+    root.style.setProperty('--ring', color);
+    root.style.setProperty('--input', color);
+    root.style.setProperty('--accent', color);
+
+    // Update toggle and interactive elements
+    root.style.setProperty('--switch', color);
+    root.style.setProperty('--switch-foreground', 'hsl(0 0% 100%)');
+    root.style.setProperty('--focus-ring', `${color}33`); // 20% opacity version
   };
 
   const handleSetThemeMode = (mode: ThemeMode) => {
