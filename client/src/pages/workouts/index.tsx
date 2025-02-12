@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 import { WorkoutCard } from "@/components/workouts/workout-card";
+import { RecentWorkouts } from "@/components/workouts/recent-workouts";
 import type { Workout } from "@shared/schema";
 
 export default function WorkoutList() {
@@ -23,23 +24,33 @@ export default function WorkoutList() {
         </Link>
       </div>
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => (
-            <Card key={i} className="h-32 animate-pulse" />
-          ))}
+      <div className="grid lg:grid-cols-2 gap-8">
+        {/* Workout Cards Section */}
+        <div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3].map(i => (
+                <Card key={i} className="h-32 animate-pulse" />
+              ))}
+            </div>
+          ) : workouts?.length === 0 ? (
+            <Card className="p-8 text-center">
+              <p className="text-muted-foreground">No workouts yet. Create your first one!</p>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {workouts?.map(workout => (
+                <WorkoutCard key={workout.id} workout={workout} />
+              ))}
+            </div>
+          )}
         </div>
-      ) : workouts?.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground">No workouts yet. Create your first one!</p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {workouts?.map(workout => (
-            <WorkoutCard key={workout.id} workout={workout} />
-          ))}
+
+        {/* Recent Workouts Section */}
+        <div>
+          <RecentWorkouts />
         </div>
-      )}
+      </div>
     </div>
   );
 }
