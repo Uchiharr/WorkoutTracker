@@ -16,6 +16,7 @@ export interface IStorage {
   // History
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
   getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]>;
+  getRecentHistory(): Promise<WorkoutHistory[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -63,6 +64,14 @@ export class DatabaseStorage implements IStorage {
       .from(workoutHistory)
       .where(eq(workoutHistory.exerciseId, exerciseId))
       .orderBy(desc(workoutHistory.completedAt));
+  }
+
+  async getRecentHistory(): Promise<WorkoutHistory[]> {
+    return db
+      .select()
+      .from(workoutHistory)
+      .orderBy(desc(workoutHistory.completedAt))
+      .limit(5);
   }
 }
 

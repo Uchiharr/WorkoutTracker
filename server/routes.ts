@@ -51,6 +51,11 @@ export function registerRoutes(app: Express): Server {
     res.json(history);
   });
 
+  app.get("/api/history/recent", async (_req, res) => {
+    const history = await storage.getRecentHistory();
+    res.json(history);
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
