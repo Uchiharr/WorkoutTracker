@@ -18,7 +18,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [weightUnit, setWeightUnit] = useState<WeightUnit>(() => {
     const stored = localStorage.getItem("weightUnit");
-    return (stored === "kg" || stored === "lb") ? stored : "lb";
+    return (stored === "kg" || stored === "lb") ? stored : "kg";
   });
 
   const [accentColor, setAccentColor] = useState(() => {
@@ -26,7 +26,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   });
 
   const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    return (localStorage.getItem("themeMode") as ThemeMode) || "light";
+    return (localStorage.getItem("themeMode") as ThemeMode) || "dark";
   });
 
   const handleSetWeightUnit = (unit: WeightUnit) => {

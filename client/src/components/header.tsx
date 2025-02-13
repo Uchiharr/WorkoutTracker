@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useSettings } from "@/contexts/settings";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Dumbbell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 export function Header() {
@@ -12,7 +12,9 @@ export function Header() {
     <header className="border-b">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link href="/">
-          <h1 className="text-xl font-bold cursor-pointer">Workout Tracker</h1>
+          <div className="flex items-center space-x-2 cursor-pointer">
+            <Dumbbell className="h-8 w-8" />
+          </div>
         </Link>
 
         <div className="flex items-center space-x-6">
@@ -20,13 +22,13 @@ export function Header() {
           <div className="flex items-center space-x-2">
             <Label htmlFor="unit-toggle">Weight Unit:</Label>
             <div className="flex items-center space-x-2">
-              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>lbs</span>
+              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>kg</span>
               <Switch
                 id="unit-toggle"
-                checked={weightUnit === "kg"}
-                onCheckedChange={(checked) => setWeightUnit(checked ? "kg" : "lb")}
+                checked={weightUnit === "lb"}
+                onCheckedChange={(checked) => setWeightUnit(checked ? "lb" : "kg")}
               />
-              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>kg</span>
+              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>lbs</span>
             </div>
           </div>
 
@@ -34,13 +36,13 @@ export function Header() {
           <div className="flex items-center space-x-2">
             <Label htmlFor="theme-toggle">Theme:</Label>
             <div className="flex items-center space-x-2">
-              <Sun className={`h-4 w-4 ${themeMode === 'light' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <Moon className={`h-4 w-4 ${themeMode === 'dark' ? 'text-primary' : 'text-muted-foreground'}`} />
               <Switch
                 id="theme-toggle"
-                checked={themeMode === "dark"}
-                onCheckedChange={(checked) => setThemeMode(checked ? "dark" : "light")}
+                checked={themeMode === "light"}
+                onCheckedChange={(checked) => setThemeMode(checked ? "light" : "dark")}
               />
-              <Moon className={`h-4 w-4 ${themeMode === 'dark' ? 'text-primary' : 'text-muted-foreground'}`} />
+              <Sun className={`h-4 w-4 ${themeMode === 'light' ? 'text-primary' : 'text-muted-foreground'}`} />
             </div>
           </div>
 
