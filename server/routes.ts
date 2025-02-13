@@ -56,6 +56,15 @@ export function registerRoutes(app: Express): Server {
     res.status(204).end();
   });
 
+  app.get("/api/workouts/:id/history", async (req, res) => {
+    const exercises = await storage.getExercisesForWorkout(Number(req.params.id));
+    const histories = await Promise.all(
+      exercises.map(exercise => storage.getHistoryForExercise(exercise.id))
+    );
+    const allHistory = histories.flat();
+    res.json(allHistory);
+  });
+
   app.post("/api/history", async (req, res) => {
     const parsed = insertHistorySchema.parse({
       ...req.body,

@@ -8,12 +8,16 @@ export default function WorkoutHistory({ params }: { params: { id: string } }) {
     queryKey: [`/api/workouts/${params.id}/exercises`]
   });
 
-  const exerciseHistories = exercises?.map(exercise => {
-    const { data: history } = useQuery<WorkoutHistory[]>({
-      queryKey: [`/api/exercises/${exercise.id}/history`]
-    });
-    return { exercise, history };
+  const { data: histories } = useQuery<WorkoutHistory[]>({
+    queryKey: [`/api/workouts/${params.id}/history`],
+    enabled: !!exercises
   });
+
+  // Group histories by exercise
+  const exerciseHistories = exercises?.map(exercise => ({
+    exercise,
+    history: histories?.filter(h => h.exerciseId === exercise.id) || []
+  }));
 
   return (
     <div className="container mx-auto px-4 py-8">
