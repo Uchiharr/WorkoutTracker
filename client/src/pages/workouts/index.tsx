@@ -5,15 +5,22 @@ import { Card } from "@/components/ui/card";
 import { Plus, History } from "lucide-react";
 import { WorkoutCard } from "@/components/workouts/workout-card";
 import { format } from "date-fns";
-import type { Workout, WorkoutHistory } from "@shared/schema";
+import type { Workout } from "@shared/schema";
+
+type RecentWorkout = {
+  id: number;
+  workoutId: number;
+  workoutName: string;
+  completedAt: string;
+};
 
 export default function WorkoutList() {
   const { data: workouts, isLoading } = useQuery<Workout[]>({
     queryKey: ["/api/workouts"]
   });
 
-  const { data: recentHistory } = useQuery<(WorkoutHistory & { workoutName: string })[]>({
-    queryKey: ["/api/history/recent"],
+  const { data: recentHistory } = useQuery<RecentWorkout[]>({
+    queryKey: ["/api/history/recent"]
   });
 
   return (
@@ -59,16 +66,18 @@ export default function WorkoutList() {
         ) : (
           <div className="space-y-4">
             {recentHistory.map((history) => (
-              <Card key={history.id} className="p-4">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h3 className="font-medium">{history.workoutName}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {format(new Date(history.completedAt), "PPP")}
-                    </p>
+              <Link key={history.id} href={`/workouts/${history.workoutId}/history`}>
+                <Card className="p-4 hover:bg-accent cursor-pointer transition-colors">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <h3 className="font-medium">{history.workoutName}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {format(new Date(history.completedAt), "PPP")}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
