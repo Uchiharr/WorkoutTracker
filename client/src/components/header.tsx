@@ -20,21 +20,21 @@ export function Header() {
         <div className="flex items-center space-x-6">
           {/* Weight Unit Toggle */}
           <div className="flex items-center space-x-2">
-            <Label htmlFor="unit-toggle">Weight Unit:</Label>
+            <Label htmlFor="unit-toggle" className="sr-only">Weight Unit</Label>
             <div className="flex items-center space-x-2">
-              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>kg</span>
+              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>KG</span>
               <Switch
                 id="unit-toggle"
                 checked={weightUnit === "lb"}
                 onCheckedChange={(checked) => setWeightUnit(checked ? "lb" : "kg")}
               />
-              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>lbs</span>
+              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>LBS</span>
             </div>
           </div>
 
           {/* Theme Toggle */}
           <div className="flex items-center space-x-2">
-            <Label htmlFor="theme-toggle">Theme:</Label>
+            <Label htmlFor="theme-toggle" className="sr-only">Theme</Label>
             <div className="flex items-center space-x-2">
               <Moon className={`h-4 w-4 ${themeMode === 'dark' ? 'text-primary' : 'text-muted-foreground'}`} />
               <Switch
@@ -48,7 +48,7 @@ export function Header() {
 
           {/* Accent Color Picker */}
           <div className="flex items-center space-x-2">
-            <Label htmlFor="accent-color">Accent:</Label>
+            <Label htmlFor="accent-color" className="sr-only">Accent Color</Label>
             <Input
               id="accent-color"
               type="color"
