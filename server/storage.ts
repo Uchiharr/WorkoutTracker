@@ -7,6 +7,7 @@ export interface IStorage {
   // Workouts
   createWorkout(workout: InsertWorkout): Promise<Workout>;
   updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined>;
+  deleteWorkout(id: number): Promise<void>;
   getWorkout(id: number): Promise<Workout | undefined>;
   listWorkouts(): Promise<Workout[]>;
 
@@ -34,6 +35,10 @@ export class DatabaseStorage implements IStorage {
       .where(eq(workouts.id, id))
       .returning();
     return result;
+  }
+
+  async deleteWorkout(id: number): Promise<void> {
+    await db.delete(workouts).where(eq(workouts.id, id));
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {

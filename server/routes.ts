@@ -24,6 +24,11 @@ export function registerRoutes(app: Express): Server {
     res.json(workout);
   });
 
+  app.delete("/api/workouts/:id", async (req, res) => {
+    await storage.deleteWorkout(Number(req.params.id));
+    res.status(204).end();
+  });
+
   app.get("/api/workouts/:id", async (req, res) => {
     const workout = await storage.getWorkout(Number(req.params.id));
     if (!workout) {

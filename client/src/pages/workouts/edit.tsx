@@ -16,7 +16,8 @@ export default function EditWorkout({ params }: { params: { id: string } }) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Omit<Exercise, "id">[]>([]);
-  
+  const [editingExerciseIndex, setEditingExerciseIndex] = useState<number | null>(null);
+
   const { data: workout } = useQuery({
     queryKey: [`/api/workouts/${params.id}`]
   });
@@ -40,15 +41,15 @@ export default function EditWorkout({ params }: { params: { id: string } }) {
     mutationFn: async (data: InsertWorkout) => {
       const workout = await apiRequest("PATCH", `/api/workouts/${params.id}`, data)
         .then(r => r.json());
-      
+
       // Delete existing exercises
       await apiRequest("DELETE", `/api/workouts/${params.id}/exercises`);
-      
+
       // Create new exercises
       for (const exercise of exercises) {
         await apiRequest("POST", `/api/workouts/${params.id}/exercises`, exercise);
       }
-      
+
       return workout;
     },
     onSuccess: () => {
@@ -56,6 +57,21 @@ export default function EditWorkout({ params }: { params: { id: string } }) {
       toast({ 
         title: "Success", 
         description: "Workout updated successfully",
+        duration: 3000
+      });
+      navigate("/");
+    }
+  });
+
+  const deleteWorkout = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", `/api/workouts/${params.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
+      toast({ 
+        title: "Success", 
+        description: "Workout deleted successfully",
         duration: 3000
       });
       navigate("/");
@@ -84,42 +100,83 @@ export default function EditWorkout({ params }: { params: { id: string } }) {
               <div className="space-y-4">
                 {exercises.map((exercise, index) => (
                   <div key={index} className="flex items-center gap-4">
-                    <div className="flex-1">
-                      <p className="font-medium">{exercise.name}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {exercise.sets} sets × {exercise.reps} reps
-                      </p>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setExercises(exercises.filter((_, i) => i !== index))}
-                    >
-                      Remove
-                    </Button>
+                    {editingExerciseIndex === index ? (
+                      <div className="flex-1">
+                        <ExerciseForm
+                          defaultValues={exercise}
+                          onSubmit={(data) => {
+                            const updatedExercises = [...exercises];
+                            updatedExercises[index] = { ...data, workoutId: Number(params.id), order: index };
+                            setExercises(updatedExercises);
+                            setEditingExerciseIndex(null);
+                          }}
+                          onCancel={() => setEditingExerciseIndex(null)}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex-1">
+                          <p className="font-medium">{exercise.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {exercise.sets} sets × {exercise.reps} reps
+                          </p>
+                        </div>
+                        <div className="space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setEditingExerciseIndex(index)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => setExercises(exercises.filter((_, i) => i !== index))}
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 ))}
               </div>
 
-              <ExerciseForm
-                onSubmit={(data) => {
-                  setExercises([...exercises, { ...data, workoutId: Number(params.id), order: exercises.length }]);
-                }}
-              />
+              {editingExerciseIndex === null && (
+                <ExerciseForm
+                  onSubmit={(data) => {
+                    setExercises([...exercises, { ...data, workoutId: Number(params.id), order: exercises.length }]);
+                  }}
+                />
+              )}
 
-              <div className="pt-4 space-x-4">
-                <Button
-                  type="submit"
-                  disabled={exercises.length === 0 || updateWorkout.isPending}
-                >
-                  Update Workout
-                </Button>
+              <div className="pt-4 flex justify-between items-center">
+                <div className="space-x-4">
+                  <Button
+                    type="submit"
+                    disabled={exercises.length === 0 || updateWorkout.isPending}
+                  >
+                    Update Workout
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate("/")}
+                  >
+                    Cancel
+                  </Button>
+                </div>
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => navigate("/")}
+                  variant="destructive"
+                  onClick={() => {
+                    if (confirm("Are you sure you want to delete this workout?")) {
+                      deleteWorkout.mutate();
+                    }
+                  }}
                 >
-                  Cancel
+                  Delete Workout
                 </Button>
               </div>
             </div>
