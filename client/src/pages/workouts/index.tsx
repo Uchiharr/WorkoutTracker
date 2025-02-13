@@ -12,7 +12,7 @@ export default function WorkoutList() {
     queryKey: ["/api/workouts"]
   });
 
-  const { data: recentHistory } = useQuery<WorkoutHistory[]>({
+  const { data: recentHistory } = useQuery<(WorkoutHistory & { workoutName: string })[]>({
     queryKey: ["/api/history/recent"],
   });
 
@@ -62,13 +62,10 @@ export default function WorkoutList() {
               <Card key={history.id} className="p-4">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="font-medium">{workouts?.find(w => w.id === history.workoutId)?.name}</h3>
+                    <h3 className="font-medium">{history.workoutName}</h3>
                     <p className="text-sm text-muted-foreground">
                       {format(new Date(history.completedAt), "PPP")}
                     </p>
-                  </div>
-                  <div className="text-sm">
-                    {history.weight} {history.unit}
                   </div>
                 </div>
               </Card>

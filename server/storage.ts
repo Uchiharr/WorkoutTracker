@@ -16,7 +16,7 @@ export interface IStorage {
   // History
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
   getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]>;
-  getRecentHistory(): Promise<WorkoutHistory[]>;
+  getRecentHistory(): Promise<(WorkoutHistory & { workoutName: string })[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -66,12 +66,36 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(workoutHistory.completedAt));
   }
 
-  async getRecentHistory(): Promise<WorkoutHistory[]> {
-    return db
-      .select()
+  async getRecentHistory(): Promise<(WorkoutHistory & { workoutName: string })[]> {
+    // Get the most recent completion for each workout
+    const subquery = db
+      .select({
+        workoutId: workoutHistory.workoutId,
+        latestCompletedAt: sql<string>`MAX(${workoutHistory.completedAt})`
+      })
       .from(workoutHistory)
+      .groupBy(workoutHistory.workoutId);
+
+    const recentWorkouts = await db
+      .select({
+        id: workoutHistory.id,
+        workoutId: workoutHistory.workoutId,
+        exerciseId: workoutHistory.exerciseId,
+        weight: workoutHistory.weight,
+        unit: workoutHistory.unit,
+        completedAt: workoutHistory.completedAt,
+        workoutName: workouts.name
+      })
+      .from(workoutHistory)
+      .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
+      .innerJoin(
+        subquery,
+        sql`${workoutHistory.workoutId} = ${subquery.workoutId} AND ${workoutHistory.completedAt} = ${subquery.latestCompletedAt}`
+      )
       .orderBy(desc(workoutHistory.completedAt))
       .limit(5);
+
+    return recentWorkouts;
   }
 }
 
