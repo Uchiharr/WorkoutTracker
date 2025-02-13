@@ -22,13 +22,13 @@ export function Header() {
           <div className="flex items-center space-x-2">
             <Label htmlFor="unit-toggle" className="sr-only">Weight Unit</Label>
             <div className="flex items-center space-x-2">
-              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>KG</span>
+              <span className={weightUnit === "kg" ? "font-medium" : "text-muted-foreground"}>Kg</span>
               <Switch
                 id="unit-toggle"
                 checked={weightUnit === "lb"}
                 onCheckedChange={(checked) => setWeightUnit(checked ? "lb" : "kg")}
               />
-              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>LBS</span>
+              <span className={weightUnit === "lb" ? "font-medium" : "text-muted-foreground"}>Lbs</span>
             </div>
           </div>
 
