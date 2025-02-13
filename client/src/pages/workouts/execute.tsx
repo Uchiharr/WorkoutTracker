@@ -9,7 +9,7 @@ import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useSettings } from "@/contexts/settings";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Exercise, WorkoutHistory } from "@shared/schema";
 
 export default function ExecuteWorkout({ params }: { params: { id: string } }) {
