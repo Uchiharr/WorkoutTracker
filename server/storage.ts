@@ -70,7 +70,13 @@ export class DatabaseStorage implements IStorage {
   async addHistory(history: InsertHistory): Promise<WorkoutHistory> {
     const [result] = await db
       .insert(workoutHistory)
-      .values(history)
+      .values({
+        workoutId: history.workoutId,
+        exerciseId: history.exerciseId,
+        weight: history.weight,
+        unit: history.unit,
+        completedAt: history.completedAt
+      })
       .returning();
     return result;
   }
@@ -107,8 +113,9 @@ export class DatabaseStorage implements IStorage {
         })
         .from(workoutHistory)
         .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
-        .where(eq(workoutHistory.workoutId, latest.workoutId))
-        .where(eq(workoutHistory.completedAt, new Date(latest.latestCompletedAt)))
+        .where(
+          sql`${workoutHistory.workoutId} = ${latest.workoutId} AND ${workoutHistory.completedAt} = ${new Date(latest.latestCompletedAt)}`
+        )
         .limit(1);
 
       if (workout) {
