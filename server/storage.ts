@@ -67,31 +67,39 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentHistory(): Promise<{ id: number; workoutId: number; workoutName: string; completedAt: Date }[]> {
-    const subquery = db
+    // First, get the latest completion time for each workout
+    const latestWorkouts = await db
       .select({
         workoutId: workoutHistory.workoutId,
-        maxCompletedAt: sql<string>`MAX(${workoutHistory.completedAt})`
+        latestCompletedAt: sql<string>`MAX(${workoutHistory.completedAt})`
       })
       .from(workoutHistory)
-      .groupBy(workoutHistory.workoutId);
-
-    const query = db
-      .select({
-        id: workoutHistory.id,
-        workoutId: workoutHistory.workoutId,
-        workoutName: workouts.name,
-        completedAt: workoutHistory.completedAt
-      })
-      .from(workoutHistory)
-      .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
-      .innerJoin(
-        subquery as any,
-        sql`${workoutHistory.workoutId} = ${subquery.workoutId} AND ${workoutHistory.completedAt} = ${subquery.maxCompletedAt}`
-      )
-      .orderBy(desc(workoutHistory.completedAt))
+      .groupBy(workoutHistory.workoutId)
+      .orderBy(desc(sql<string>`MAX(${workoutHistory.completedAt})`))
       .limit(5);
 
-    return query;
+    // Then, get the full details for these latest workouts
+    const recentWorkouts = [];
+    for (const latest of latestWorkouts) {
+      const [workout] = await db
+        .select({
+          id: workoutHistory.id,
+          workoutId: workoutHistory.workoutId,
+          workoutName: workouts.name,
+          completedAt: workoutHistory.completedAt
+        })
+        .from(workoutHistory)
+        .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
+        .where(eq(workoutHistory.workoutId, latest.workoutId))
+        .where(eq(workoutHistory.completedAt, new Date(latest.latestCompletedAt)))
+        .limit(1);
+
+      if (workout) {
+        recentWorkouts.push(workout);
+      }
+    }
+
+    return recentWorkouts;
   }
 }
 
