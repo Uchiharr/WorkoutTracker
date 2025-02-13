@@ -10,12 +10,12 @@ interface WorkoutCardProps {
 
 export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{workout.name}</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="flex space-x-2">
+      <CardContent className="flex-grow">
+        <div className="grid grid-cols-3 gap-2">
           <Link href={`/workouts/${workout.id}/execute`}>
             <Button variant="default" className="w-full">
               <Play className="w-4 h-4 mr-2" />

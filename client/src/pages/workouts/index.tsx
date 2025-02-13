@@ -2,9 +2,10 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, History } from "lucide-react";
+import { Plus, History, Download, Upload } from "lucide-react";
 import { WorkoutCard } from "@/components/workouts/workout-card";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 import type { Workout } from "@shared/schema";
 
 type RecentWorkout = {
@@ -15,6 +16,7 @@ type RecentWorkout = {
 };
 
 export default function WorkoutList() {
+  const { toast } = useToast();
   const { data: workouts, isLoading } = useQuery<Workout[]>({
     queryKey: ["/api/workouts"]
   });
@@ -23,22 +25,93 @@ export default function WorkoutList() {
     queryKey: ["/api/history/recent"]
   });
 
+  const handleExport = async () => {
+    try {
+      const response = await fetch('/api/export');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'workout-data.json';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast({
+        title: "Success",
+        description: "Workouts exported successfully",
+        duration: 3000
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to export workouts",
+        variant: "destructive",
+        duration: 3000
+      });
+    }
+  };
+
+  const handleImport = async () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const data = JSON.parse(text);
+        await fetch('/api/import', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        toast({
+          title: "Success",
+          description: "Workouts imported successfully",
+          duration: 3000
+        });
+        window.location.reload();
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to import workouts",
+          variant: "destructive",
+          duration: 3000
+        });
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">My Workouts</h1>
-        <Link href="/workouts/create">
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            New Workout
+        <div className="flex gap-2">
+          <Button onClick={handleImport}>
+            <Upload className="w-4 h-4 mr-2" />
+            Import
           </Button>
-        </Link>
+          <Button onClick={handleExport}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+          <Link href="/workouts/create">
+            <Button>
+              <Plus className="w-4 h-4 mr-2" />
+              New Workout
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {[1, 2, 3].map(i => (
-            <Card key={i} className="h-32 animate-pulse" />
+            <Card key={i} className="h-48 animate-pulse" />
           ))}
         </div>
       ) : workouts?.length === 0 ? (
