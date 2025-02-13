@@ -1,17 +1,24 @@
 import { type Workout, type Exercise, type WorkoutHistory, type InsertWorkout, type InsertExercise, type InsertHistory } from "@shared/schema";
 
 export interface IStorage {
+  // Workouts
   createWorkout(workout: InsertWorkout): Promise<Workout>;
   updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined>;
   deleteWorkout(id: number): Promise<void>;
   getWorkout(id: number): Promise<Workout | undefined>;
   listWorkouts(): Promise<Workout[]>;
+
+  // Exercises
   createExercise(exercise: InsertExercise): Promise<Exercise>;
   getExercisesForWorkout(workoutId: number): Promise<Exercise[]>;
   deleteExercisesForWorkout(workoutId: number): Promise<void>;
+
+  // History
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
   getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]>;
   getRecentHistory(): Promise<{ id: number; workoutId: number; workoutName: string; completedAt: Date }[]>;
+
+  // Import/Export
   exportData(): Promise<string>;
   importData(jsonData: string): Promise<void>;
 }
@@ -22,23 +29,63 @@ export class MemoryStorage implements IStorage {
   private history: WorkoutHistory[] = [];
   private nextId = 1;
 
+  constructor() {
+    this.loadFromLocalStorage();
+  }
+
+  private loadFromLocalStorage() {
+    try {
+      const data = localStorage.getItem('workoutData');
+      if (data) {
+        const parsed = JSON.parse(data);
+        this.workouts = parsed.workouts || [];
+        this.exercises = parsed.exercises || [];
+        this.history = parsed.history || [];
+        this.nextId = Math.max(
+          ...this.workouts.map(w => w.id),
+          ...this.exercises.map(e => e.id),
+          ...this.history.map(h => h.id),
+          0
+        ) + 1;
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }
+
+  private saveToLocalStorage() {
+    try {
+      localStorage.setItem('workoutData', JSON.stringify({
+        workouts: this.workouts,
+        exercises: this.exercises,
+        history: this.history
+      }));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }
+
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
     const newWorkout = { ...workout, id: this.nextId++ };
     this.workouts.push(newWorkout);
+    this.saveToLocalStorage();
     return newWorkout;
   }
 
   async updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined> {
     const index = this.workouts.findIndex(w => w.id === id);
     if (index === -1) return undefined;
+
     const updatedWorkout = { ...workout, id };
     this.workouts[index] = updatedWorkout;
+    this.saveToLocalStorage();
     return updatedWorkout;
   }
 
   async deleteWorkout(id: number): Promise<void> {
     this.workouts = this.workouts.filter(w => w.id !== id);
     this.exercises = this.exercises.filter(e => e.workoutId !== id);
+    this.saveToLocalStorage();
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {
@@ -52,6 +99,7 @@ export class MemoryStorage implements IStorage {
   async createExercise(exercise: InsertExercise): Promise<Exercise> {
     const newExercise = { ...exercise, id: this.nextId++ };
     this.exercises.push(newExercise);
+    this.saveToLocalStorage();
     return newExercise;
   }
 
@@ -63,11 +111,13 @@ export class MemoryStorage implements IStorage {
 
   async deleteExercisesForWorkout(workoutId: number): Promise<void> {
     this.exercises = this.exercises.filter(e => e.workoutId !== workoutId);
+    this.saveToLocalStorage();
   }
 
   async addHistory(history: InsertHistory): Promise<WorkoutHistory> {
     const newHistory = { ...history, id: this.nextId++ };
     this.history.push(newHistory);
+    this.saveToLocalStorage();
     return newHistory;
   }
 
@@ -79,6 +129,7 @@ export class MemoryStorage implements IStorage {
 
   async getRecentHistory(): Promise<{ id: number; workoutId: number; workoutName: string; completedAt: Date }[]> {
     const workoutMap = new Map(this.workouts.map(w => [w.id, w.name]));
+
     return this.history
       .map(h => ({
         id: h.id,
@@ -110,6 +161,7 @@ export class MemoryStorage implements IStorage {
         ...this.history.map(h => h.id),
         0
       ) + 1;
+      this.saveToLocalStorage();
     } catch (error) {
       throw new Error('Invalid import data format');
     }
