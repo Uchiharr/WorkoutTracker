@@ -67,16 +67,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentHistory(): Promise<(WorkoutHistory & { workoutName: string })[]> {
-    // Get the most recent completion for each workout
-    const subquery = db
-      .select({
-        workoutId: workoutHistory.workoutId,
-        latestCompletedAt: sql<string>`MAX(${workoutHistory.completedAt})`
-      })
-      .from(workoutHistory)
-      .groupBy(workoutHistory.workoutId);
-
-    const recentWorkouts = await db
+    // Get the most recent workouts by finding the latest completion time for each workout
+    return db
       .select({
         id: workoutHistory.id,
         workoutId: workoutHistory.workoutId,
@@ -88,14 +80,8 @@ export class DatabaseStorage implements IStorage {
       })
       .from(workoutHistory)
       .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
-      .innerJoin(
-        subquery,
-        sql`${workoutHistory.workoutId} = ${subquery.workoutId} AND ${workoutHistory.completedAt} = ${subquery.latestCompletedAt}`
-      )
       .orderBy(desc(workoutHistory.completedAt))
       .limit(5);
-
-    return recentWorkouts;
   }
 }
 
