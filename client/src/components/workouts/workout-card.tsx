@@ -51,7 +51,7 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
               </Link>
               <Button 
                 variant="outline" 
-                size="lg" {/* Increased button size */}
+                size="lg" /* Increased button size */
                 onClick={() => {
                   if (confirm("Are you sure you want to delete this workout?")) {
                     deleteWorkout.mutate();
