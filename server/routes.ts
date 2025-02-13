@@ -75,6 +75,23 @@ export function registerRoutes(app: Express): Server {
     res.json(history);
   });
 
+  // New routes for import/export functionality
+  app.get("/api/export", async (_req, res) => {
+    const data = await storage.exportData();
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', 'attachment; filename=workout-data.json');
+    res.send(data);
+  });
+
+  app.post("/api/import", async (req, res) => {
+    try {
+      await storage.importData(JSON.stringify(req.body));
+      res.json({ message: "Data imported successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid import data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

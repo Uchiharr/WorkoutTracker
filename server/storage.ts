@@ -1,7 +1,4 @@
 import { type Workout, type Exercise, type WorkoutHistory, type InsertWorkout, type InsertExercise, type InsertHistory } from "@shared/schema";
-import { workouts, exercises, workoutHistory } from "@shared/schema";
-import { db } from "./db";
-import { eq, desc, sql } from "drizzle-orm";
 
 export interface IStorage {
   // Workouts
@@ -20,111 +17,155 @@ export interface IStorage {
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
   getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]>;
   getRecentHistory(): Promise<{ id: number; workoutId: number; workoutName: string; completedAt: Date }[]>;
+
+  // Import/Export
+  exportData(): Promise<string>;
+  importData(jsonData: string): Promise<void>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class MemoryStorage implements IStorage {
+  private workouts: Workout[] = [];
+  private exercises: Exercise[] = [];
+  private history: WorkoutHistory[] = [];
+  private nextId = 1;
+
+  constructor() {
+    this.loadFromLocalStorage();
+  }
+
+  private loadFromLocalStorage() {
+    try {
+      const data = localStorage.getItem('workoutData');
+      if (data) {
+        const parsed = JSON.parse(data);
+        this.workouts = parsed.workouts || [];
+        this.exercises = parsed.exercises || [];
+        this.history = parsed.history || [];
+        this.nextId = Math.max(
+          ...this.workouts.map(w => w.id),
+          ...this.exercises.map(e => e.id),
+          ...this.history.map(h => h.id),
+          0
+        ) + 1;
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error);
+    }
+  }
+
+  private saveToLocalStorage() {
+    try {
+      localStorage.setItem('workoutData', JSON.stringify({
+        workouts: this.workouts,
+        exercises: this.exercises,
+        history: this.history
+      }));
+    } catch (error) {
+      console.error('Error saving to localStorage:', error);
+    }
+  }
+
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
-    const [result] = await db.insert(workouts).values(workout).returning();
-    return result;
+    const newWorkout = { ...workout, id: this.nextId++ };
+    this.workouts.push(newWorkout);
+    this.saveToLocalStorage();
+    return newWorkout;
   }
 
   async updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined> {
-    const [result] = await db
-      .update(workouts)
-      .set(workout)
-      .where(eq(workouts.id, id))
-      .returning();
-    return result;
+    const index = this.workouts.findIndex(w => w.id === id);
+    if (index === -1) return undefined;
+
+    const updatedWorkout = { ...workout, id };
+    this.workouts[index] = updatedWorkout;
+    this.saveToLocalStorage();
+    return updatedWorkout;
   }
 
   async deleteWorkout(id: number): Promise<void> {
-    await db.delete(workouts).where(eq(workouts.id, id));
+    this.workouts = this.workouts.filter(w => w.id !== id);
+    this.exercises = this.exercises.filter(e => e.workoutId !== id);
+    this.saveToLocalStorage();
   }
 
   async getWorkout(id: number): Promise<Workout | undefined> {
-    const [result] = await db.select().from(workouts).where(eq(workouts.id, id));
-    return result;
+    return this.workouts.find(w => w.id === id);
   }
 
   async listWorkouts(): Promise<Workout[]> {
-    return db.select().from(workouts);
+    return this.workouts;
   }
 
   async createExercise(exercise: InsertExercise): Promise<Exercise> {
-    const [result] = await db.insert(exercises).values(exercise).returning();
-    return result;
+    const newExercise = { ...exercise, id: this.nextId++ };
+    this.exercises.push(newExercise);
+    this.saveToLocalStorage();
+    return newExercise;
   }
 
   async getExercisesForWorkout(workoutId: number): Promise<Exercise[]> {
-    return db
-      .select()
-      .from(exercises)
-      .where(eq(exercises.workoutId, workoutId))
-      .orderBy(exercises.order);
+    return this.exercises
+      .filter(e => e.workoutId === workoutId)
+      .sort((a, b) => a.order - b.order);
   }
 
   async deleteExercisesForWorkout(workoutId: number): Promise<void> {
-    await db.delete(exercises).where(eq(exercises.workoutId, workoutId));
+    this.exercises = this.exercises.filter(e => e.workoutId !== workoutId);
+    this.saveToLocalStorage();
   }
 
   async addHistory(history: InsertHistory): Promise<WorkoutHistory> {
-    const [result] = await db
-      .insert(workoutHistory)
-      .values({
-        workoutId: history.workoutId,
-        exerciseId: history.exerciseId,
-        weight: history.weight,
-        unit: history.unit,
-        completedAt: history.completedAt
-      })
-      .returning();
-    return result;
+    const newHistory = { ...history, id: this.nextId++ };
+    this.history.push(newHistory);
+    this.saveToLocalStorage();
+    return newHistory;
   }
 
   async getHistoryForExercise(exerciseId: number): Promise<WorkoutHistory[]> {
-    return db
-      .select()
-      .from(workoutHistory)
-      .where(eq(workoutHistory.exerciseId, exerciseId))
-      .orderBy(desc(workoutHistory.completedAt));
+    return this.history
+      .filter(h => h.exerciseId === exerciseId)
+      .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
   }
 
   async getRecentHistory(): Promise<{ id: number; workoutId: number; workoutName: string; completedAt: Date }[]> {
-    // First, get the latest completion time for each workout
-    const latestWorkouts = await db
-      .select({
-        workoutId: workoutHistory.workoutId,
-        latestCompletedAt: sql<string>`MAX(${workoutHistory.completedAt})`
-      })
-      .from(workoutHistory)
-      .groupBy(workoutHistory.workoutId)
-      .orderBy(desc(sql<string>`MAX(${workoutHistory.completedAt})`))
-      .limit(5);
+    const workoutMap = new Map(this.workouts.map(w => [w.id, w.name]));
 
-    // Then, get the full details for these latest workouts
-    const recentWorkouts = [];
-    for (const latest of latestWorkouts) {
-      const [workout] = await db
-        .select({
-          id: workoutHistory.id,
-          workoutId: workoutHistory.workoutId,
-          workoutName: workouts.name,
-          completedAt: workoutHistory.completedAt
-        })
-        .from(workoutHistory)
-        .innerJoin(workouts, eq(workoutHistory.workoutId, workouts.id))
-        .where(
-          sql`${workoutHistory.workoutId} = ${latest.workoutId} AND ${workoutHistory.completedAt} = ${new Date(latest.latestCompletedAt)}`
-        )
-        .limit(1);
+    return this.history
+      .map(h => ({
+        id: h.id,
+        workoutId: h.workoutId,
+        workoutName: workoutMap.get(h.workoutId) || 'Unknown Workout',
+        completedAt: new Date(h.completedAt)
+      }))
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime())
+      .slice(0, 5);
+  }
 
-      if (workout) {
-        recentWorkouts.push(workout);
-      }
+  async exportData(): Promise<string> {
+    return JSON.stringify({
+      workouts: this.workouts,
+      exercises: this.exercises,
+      history: this.history
+    }, null, 2);
+  }
+
+  async importData(jsonData: string): Promise<void> {
+    try {
+      const data = JSON.parse(jsonData);
+      this.workouts = data.workouts || [];
+      this.exercises = data.exercises || [];
+      this.history = data.history || [];
+      this.nextId = Math.max(
+        ...this.workouts.map(w => w.id),
+        ...this.exercises.map(e => e.id),
+        ...this.history.map(h => h.id),
+        0
+      ) + 1;
+      this.saveToLocalStorage();
+    } catch (error) {
+      throw new Error('Invalid import data format');
     }
-
-    return recentWorkouts;
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new MemoryStorage();
