@@ -7,6 +7,7 @@ import { Header } from "@/components/header";
 import NotFound from "@/pages/not-found";
 import WorkoutList from "@/pages/workouts";
 import CreateWorkout from "@/pages/workouts/create";
+import EditWorkout from "@/pages/workouts/edit";
 import ExecuteWorkout from "@/pages/workouts/execute";
 import WorkoutHistory from "@/pages/workouts/history";
 
@@ -16,6 +17,7 @@ function Router() {
       <Route path="/" component={WorkoutList} />
       <Route path="/workouts/create" component={CreateWorkout} />
       <Route path="/workouts/:id/execute" component={ExecuteWorkout} />
+      <Route path="/workouts/:id/edit" component={EditWorkout} />
       <Route path="/workouts/:id/history" component={WorkoutHistory} />
       <Route component={NotFound} />
     </Switch>
