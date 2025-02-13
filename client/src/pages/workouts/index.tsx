@@ -92,11 +92,11 @@ export default function WorkoutList() {
         <h1 className="text-3xl font-bold">My Workouts</h1>
         <div className="flex gap-2">
           <Button onClick={handleImport}>
-            <Upload className="w-4 h-4 mr-2" />
+            <Download className="w-4 h-4 mr-2" />
             Import
           </Button>
           <Button onClick={handleExport}>
-            <Download className="w-4 h-4 mr-2" />
+            <Upload className="w-4 h-4 mr-2" />
             Export
           </Button>
           <Link href="/workouts/create">
