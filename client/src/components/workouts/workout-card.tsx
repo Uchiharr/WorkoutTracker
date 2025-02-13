@@ -1,18 +1,18 @@
 import { Link } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, History, Edit2 } from "lucide-react";
+import { Play, Edit, Trash } from "lucide-react";
 import type { Workout } from "@shared/schema";
 
-interface WorkoutCardProps {
+type WorkoutCardProps = {
   workout: Workout;
-}
+};
 
 export function WorkoutCard({ workout }: WorkoutCardProps) {
   return (
     <Card className="flex flex-col h-full">
-      <CardHeader>
-        <CardTitle>{workout.name}</CardTitle>
+      <CardHeader className="text-center">
+        <CardTitle className="mx-auto">{workout.name}</CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
         <div className="grid grid-cols-3 gap-2">
@@ -24,14 +24,14 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
           </Link>
           <Link href={`/workouts/${workout.id}/edit`}>
             <Button variant="outline" className="w-full">
-              <Edit2 className="w-4 h-4 mr-2" />
+              <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
           </Link>
-          <Link href={`/workouts/${workout.id}/history`}>
+          <Link href={`/workouts/${workout.id}/delete`}>
             <Button variant="outline" className="w-full">
-              <History className="w-4 h-4 mr-2" />
-              History
+              <Trash className="w-4 h-4 mr-2" />
+              Delete
             </Button>
           </Link>
         </div>
