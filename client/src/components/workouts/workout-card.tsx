@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, History } from "lucide-react";
+import { Play, History, Edit2 } from "lucide-react";
 import type { Workout } from "@shared/schema";
 
 interface WorkoutCardProps {
@@ -20,6 +20,12 @@ export function WorkoutCard({ workout }: WorkoutCardProps) {
             <Button variant="default" className="w-full">
               <Play className="w-4 h-4 mr-2" />
               Start
+            </Button>
+          </Link>
+          <Link href={`/workouts/${workout.id}/edit`}>
+            <Button variant="outline" className="w-full">
+              <Edit2 className="w-4 h-4 mr-2" />
+              Edit
             </Button>
           </Link>
           <Link href={`/workouts/${workout.id}/history`}>

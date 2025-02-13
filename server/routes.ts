@@ -15,6 +15,15 @@ export function registerRoutes(app: Express): Server {
     res.json(workout);
   });
 
+  app.patch("/api/workouts/:id", async (req, res) => {
+    const parsed = insertWorkoutSchema.parse(req.body);
+    const workout = await storage.updateWorkout(Number(req.params.id), parsed);
+    if (!workout) {
+      return res.status(404).json({ message: "Workout not found" });
+    }
+    res.json(workout);
+  });
+
   app.get("/api/workouts/:id", async (req, res) => {
     const workout = await storage.getWorkout(Number(req.params.id));
     if (!workout) {
@@ -35,6 +44,11 @@ export function registerRoutes(app: Express): Server {
     });
     const exercise = await storage.createExercise(parsed);
     res.json(exercise);
+  });
+
+  app.delete("/api/workouts/:id/exercises", async (req, res) => {
+    await storage.deleteExercisesForWorkout(Number(req.params.id));
+    res.status(204).end();
   });
 
   app.post("/api/history", async (req, res) => {

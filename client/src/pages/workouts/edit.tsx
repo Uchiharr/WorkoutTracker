@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -12,47 +12,67 @@ import { useToast } from "@/hooks/use-toast";
 import { ExerciseForm } from "@/components/workouts/exercise-form";
 import { insertWorkoutSchema, insertExerciseSchema, type InsertWorkout, type Exercise } from "@shared/schema";
 
-export default function CreateWorkout() {
+export default function EditWorkout({ params }: { params: { id: string } }) {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [exercises, setExercises] = useState<Omit<Exercise, "id">[]>([]);
+  
+  const { data: workout } = useQuery({
+    queryKey: [`/api/workouts/${params.id}`]
+  });
+
+  const { data: existingExercises } = useQuery<Exercise[]>({
+    queryKey: [`/api/workouts/${params.id}/exercises`]
+  });
 
   const form = useForm<InsertWorkout>({
     resolver: zodResolver(insertWorkoutSchema),
-    defaultValues: { name: "" }
+    values: workout
   });
 
-  const createWorkout = useMutation({
+  useEffect(() => {
+    if (existingExercises) {
+      setExercises(existingExercises.map(({ id, ...rest }) => rest));
+    }
+  }, [existingExercises]);
+
+  const updateWorkout = useMutation({
     mutationFn: async (data: InsertWorkout) => {
-      const workout = await apiRequest("POST", "/api/workouts", data)
+      const workout = await apiRequest("PATCH", `/api/workouts/${params.id}`, data)
         .then(r => r.json());
-
-      // Create exercises
+      
+      // Delete existing exercises
+      await apiRequest("DELETE", `/api/workouts/${params.id}/exercises`);
+      
+      // Create new exercises
       for (const exercise of exercises) {
-        await apiRequest("POST", `/api/workouts/${workout.id}/exercises`, exercise);
+        await apiRequest("POST", `/api/workouts/${params.id}/exercises`, exercise);
       }
-
+      
       return workout;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/workouts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/history/recent"] });
       toast({ 
         title: "Success", 
-        description: "Workout created successfully",
+        description: "Workout updated successfully",
         duration: 3000
       });
       navigate("/");
     }
   });
 
+  if (!workout || !existingExercises) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8">Create Workout</h1>
+      <h1 className="text-3xl font-bold mb-8">Edit Workout</h1>
 
       <Card className="p-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(data => createWorkout.mutate(data))}>
+          <form onSubmit={form.handleSubmit(data => updateWorkout.mutate(data))}>
             <div className="space-y-4">
               <div>
                 <Input
@@ -83,16 +103,16 @@ export default function CreateWorkout() {
 
               <ExerciseForm
                 onSubmit={(data) => {
-                  setExercises([...exercises, { ...data, workoutId: 0, order: exercises.length }]);
+                  setExercises([...exercises, { ...data, workoutId: Number(params.id), order: exercises.length }]);
                 }}
               />
 
               <div className="pt-4 space-x-4">
                 <Button
                   type="submit"
-                  disabled={exercises.length === 0 || createWorkout.isPending}
+                  disabled={exercises.length === 0 || updateWorkout.isPending}
                 >
-                  Create Workout
+                  Update Workout
                 </Button>
                 <Button
                   type="button"

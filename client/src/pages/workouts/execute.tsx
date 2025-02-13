@@ -43,12 +43,17 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
       queryClient.invalidateQueries({
         queryKey: [`/api/exercises/${exercises![currentExercise].id}/history`]
       });
+      queryClient.invalidateQueries({ queryKey: ["/api/history/recent"] });
 
       if (currentExercise < exercises!.length - 1) {
         setCurrentExercise(currentExercise + 1);
         setWeight("");
       } else {
-        toast({ title: "Workout Complete!", description: "Great job!" });
+        toast({ 
+          title: "Workout Complete!", 
+          description: "Great job!",
+          duration: 3000
+        });
         navigate("/");
       }
     }

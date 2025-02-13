@@ -6,12 +6,14 @@ import { eq, desc, sql } from "drizzle-orm";
 export interface IStorage {
   // Workouts
   createWorkout(workout: InsertWorkout): Promise<Workout>;
+  updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined>;
   getWorkout(id: number): Promise<Workout | undefined>;
   listWorkouts(): Promise<Workout[]>;
 
   // Exercises
   createExercise(exercise: InsertExercise): Promise<Exercise>;
   getExercisesForWorkout(workoutId: number): Promise<Exercise[]>;
+  deleteExercisesForWorkout(workoutId: number): Promise<void>;
 
   // History
   addHistory(history: InsertHistory): Promise<WorkoutHistory>;
@@ -22,6 +24,15 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   async createWorkout(workout: InsertWorkout): Promise<Workout> {
     const [result] = await db.insert(workouts).values(workout).returning();
+    return result;
+  }
+
+  async updateWorkout(id: number, workout: InsertWorkout): Promise<Workout | undefined> {
+    const [result] = await db
+      .update(workouts)
+      .set(workout)
+      .where(eq(workouts.id, id))
+      .returning();
     return result;
   }
 
@@ -47,13 +58,14 @@ export class DatabaseStorage implements IStorage {
       .orderBy(exercises.order);
   }
 
+  async deleteExercisesForWorkout(workoutId: number): Promise<void> {
+    await db.delete(exercises).where(eq(exercises.workoutId, workoutId));
+  }
+
   async addHistory(history: InsertHistory): Promise<WorkoutHistory> {
     const [result] = await db
       .insert(workoutHistory)
-      .values({
-        ...history,
-        completedAt: sql`CURRENT_TIMESTAMP`
-      })
+      .values(history)
       .returning();
     return result;
   }
