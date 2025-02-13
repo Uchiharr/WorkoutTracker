@@ -122,7 +122,7 @@ export default function WorkoutList() {
           <p className="text-muted-foreground">No workouts yet. Create your first one!</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {workouts?.map(workout => (
             <WorkoutCard key={workout.id} workout={workout} />
           ))}
@@ -140,7 +140,7 @@ export default function WorkoutList() {
             <p className="text-muted-foreground">No workout history yet. Complete a workout to see it here!</p>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {recentHistory.map((history) => (
               <Link key={history.id} href={`/workouts/${history.workoutId}/history`}>
                 <Card className="p-4 hover:bg-accent cursor-pointer transition-colors">

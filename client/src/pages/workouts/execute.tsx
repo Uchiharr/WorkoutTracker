@@ -70,7 +70,12 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">{workout.name}</h1>
 
-      <Card className="p-6">
+      {isMobile ? (
+        <Drawer>
+          <DrawerContent className="p-6">
+      ) : (
+        <Card className="p-6">
+      )}
         <div className="space-y-6">
           <div>
             <h2 className="text-2xl font-bold">{exercise.name}</h2>
@@ -114,7 +119,12 @@ export default function ExecuteWorkout({ params }: { params: { id: string } }) {
             Exercise {currentExercise + 1} of {exercises.length}
           </div>
         </div>
-      </Card>
+      {isMobile ? (
+        </DrawerContent>
+        </Drawer>
+      ) : (
+        </Card>
+      )}
     </div>
   );
 }
